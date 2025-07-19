@@ -1,0 +1,8 @@
+{
+  "extensionName": {
+    "message": "X Post (Twitter Tweet) Button"
+  },
+  "extensionDescription": {
+    "message": "An extension to post the current site to X (tweet on Twitter)"
+  }
+}

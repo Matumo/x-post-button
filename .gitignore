@@ -238,4 +238,9 @@ $RECYCLE.BIN/
 
 
 # Build output
-build
+chrome-extension-dist/
+
+# debug
+runner/
+test-results/
+coverage/

@@ -16,7 +16,8 @@
     "tabs"
   ],
   "background": {
-    "service_worker": "src/background.js"
+    "service_worker": "src/main/background.js",
+    "type": "module"
   },
   "default_locale": "en"
 }

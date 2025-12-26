@@ -2,15 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "*" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "*" ]
   schedule:
     - cron: "0 10 * * *"
   workflow_dispatch:
 
 jobs:
-  build:
+  ALL:
     runs-on: ubuntu-latest
     steps:
       # Setup

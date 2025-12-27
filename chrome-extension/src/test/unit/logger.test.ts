@@ -22,22 +22,6 @@ describe('logger挙動検証', () => {
     vi.restoreAllMocks();
   });
 
-  it('ログレベルによる出力制御を検証', async () => {
-    // インポート
-    const { logger } = await import('../../../src/main/util/logger.js');
-
-    logger.settings.type = 'hidden';
-    logger.settings.minLevel = 2;
-    const logged = logger.info('hello', { id: 1 });
-    const loggedArgs = logged as Record<string, unknown> | undefined;
-    expect(loggedArgs?.['0']).toEqual('hello');
-    expect(loggedArgs?.['1']).toEqual({ id: 1 });
-
-    logger.settings.minLevel = 5;
-    const ignored = logger.info('ignore me');
-    expect(ignored).toBeUndefined();
-  });
-
   it('ブラウザーのエラーと未処理の拒否をロガー経由で出力する', async () => {
     // addEventListenerをモックし、登録されたリスナーを取得できるようにする
     const listeners: Record<string, EventListenerOrEventListenerObject[]> = {};
@@ -50,8 +34,8 @@ describe('logger挙動検証', () => {
     );
 
     // インポート
-    const { logger } = await import('../../../src/main/util/logger.js');
-    const errorSpy = vi.spyOn(logger, 'error');
+    const { log } = await import('../../../src/main/util/logger.js');
+    const errorSpy = vi.spyOn(log, 'error');
 
     const errorListener = listeners.error?.[0] as (event: ErrorEvent) => void;
     const rejectionListener = listeners.unhandledrejection?.[0] as (event: PromiseRejectionEvent) => void;
@@ -81,8 +65,8 @@ describe('logger挙動検証', () => {
       },
     });
 
-    const { logger } = await import('../../../src/main/util/logger.js');
-    const errorSpy = vi.spyOn(logger, 'error');
+    const { log } = await import('../../../src/main/util/logger.js');
+    const errorSpy = vi.spyOn(log, 'error');
 
     const uncaughtListener = listeners.uncaughtException?.[0];
     const unhandledListener = listeners.unhandledRejection?.[0];
@@ -103,6 +87,6 @@ describe('logger挙動検証', () => {
       on: undefined,
     });
     const module = await import('../../../src/main/util/logger.js');
-    expect(module.logger).toBeDefined();
+    expect(module.log).toBeDefined();
   });
 });

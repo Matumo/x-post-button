@@ -1,24 +1,12 @@
-import { Logger } from 'tslog';
+import { setDefaultConfig, setLoggerConfig, getLogger } from "ts-simple-logger";
 
-const LOGGER_NAME = 'app';
-const LOG_LEVEL = 'info';
+setDefaultConfig({ level: "info" });
+setLoggerConfig("root", { level: "debug" });
 
-const LOG_LEVELS = {
-  silly: 0,
-  trace: 1,
-  debug: 2,
-  info: 3,
-  warn: 4,
-  error: 5,
-  fatal: 6,
-  off: 100,
-} as const;
+const log = getLogger("root");
+log.info("server started");
+log.debug("detail...", { foo: "bar" });
 
-const logger = new Logger({
-  name: LOGGER_NAME,
-  minLevel: LOG_LEVELS[LOG_LEVEL],
-  type: 'pretty',
-});
 
 const handleBrowserErrors = (): void => {
   if (typeof globalThis.addEventListener !== 'function') {
@@ -26,10 +14,10 @@ const handleBrowserErrors = (): void => {
   }
   globalThis.addEventListener('error', (event: ErrorEvent): void => {
     const detail = event.error ?? event.message;
-    logger.error('Unhandled error:', detail);
+    log.error('Unhandled error:', detail);
   });
   globalThis.addEventListener('unhandledrejection', (event: PromiseRejectionEvent): void => {
-    logger.error('Unhandled rejection:', event.reason);
+    log.error('Unhandled rejection:', event.reason);
   });
 };
 handleBrowserErrors();
@@ -45,13 +33,13 @@ const handleNodeErrors = (): void => {
     return;
   }
   process.on('uncaughtException', (error: unknown): void => {
-    logger.error('Uncaught exception:', error);
+    log.error('Uncaught exception:', error);
   });
   process.on('unhandledRejection', (reason: unknown): void => {
-    logger.error('Unhandled rejection:', reason);
+    log.error('Unhandled rejection:', reason);
   });
 };
 handleNodeErrors();
 
-export { logger };
-export default logger;
+export { log };
+export default log;

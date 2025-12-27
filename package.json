@@ -33,6 +33,6 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "tslog": "^4.10.2"
+    "ts-simple-logger": "github:Matumo/ts-simple-logger#develop"
   }
 }

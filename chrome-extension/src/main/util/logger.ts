@@ -1,12 +1,8 @@
 import { setDefaultConfig, setLoggerConfig, getLogger } from "ts-simple-logger";
 
 setDefaultConfig({ level: "info" });
-setLoggerConfig("root", { level: "debug" });
-
-const log = getLogger("root");
-log.info("server started");
-log.debug("detail...", { foo: "bar" });
-
+setLoggerConfig("app", { level: "info" });
+const log = getLogger("app");
 
 const handleBrowserErrors = (): void => {
   if (typeof globalThis.addEventListener !== 'function') {

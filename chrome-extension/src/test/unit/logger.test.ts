@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { log } from '../../../src/test/util/logger.js';
+log.debug("test logger.test.ts");
 
 describe('logger挙動検証', () => {
   beforeEach(() => {

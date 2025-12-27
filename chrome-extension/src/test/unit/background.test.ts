@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../src/main/util/logger.js';
+import { log } from '../../../src/test/util/logger.js';
+log.debug("test background.test.ts");
 
 // テストで扱いやすいようにChrome提供の型を最小構成で再定義
 type MockTab = {

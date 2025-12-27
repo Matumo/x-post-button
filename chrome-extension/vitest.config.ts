@@ -17,6 +17,7 @@ export default defineConfig({
         "json",
         "lcov",
       ],
+      include: ['chrome-extension/src/main/**/*.{ts,tsx}'], // カバレッジ対象
     },
   },
 });

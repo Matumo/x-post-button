@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { log } from '../../../src/test/util/logger.js';
+import { log } from '@test/util/logger.js';
 log.debug("test background.test.ts");
 
 // テストで扱いやすいようにChrome提供の型を最小構成で再定義
@@ -46,7 +46,7 @@ describe('background action handler', () => {
       },
     });
 
-    await import('../../../src/main/background');
+    await import('@main/background');
   };
 
   // onClickedに登録されたハンドラを手動で呼び出し、単体テストとして扱う

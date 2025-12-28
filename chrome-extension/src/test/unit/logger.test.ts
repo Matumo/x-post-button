@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { log } from '../../../src/test/util/logger.js';
+import { log } from '@test/util/logger.js';
 log.debug("test logger.test.ts");
 
 describe('logger挙動検証', () => {
@@ -36,7 +36,7 @@ describe('logger挙動検証', () => {
     );
 
     // インポート
-    const { log } = await import('../../../src/main/util/logger.js');
+    const { log } = await import('@main/util/logger');
     const errorSpy = vi.spyOn(log, 'error');
 
     const errorListener = listeners.error?.[0] as (event: ErrorEvent) => void;
@@ -67,7 +67,7 @@ describe('logger挙動検証', () => {
       },
     });
 
-    const { log } = await import('../../../src/main/util/logger.js');
+    const { log } = await import('@main/util/logger');
     const errorSpy = vi.spyOn(log, 'error');
 
     const uncaughtListener = listeners.uncaughtException?.[0];
@@ -88,7 +88,7 @@ describe('logger挙動検証', () => {
       ...process,
       on: undefined,
     });
-    const module = await import('../../../src/main/util/logger.js');
+    const module = await import('@main/util/logger');
     expect(module.log).toBeDefined();
   });
 });

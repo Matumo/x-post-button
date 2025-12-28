@@ -6,6 +6,12 @@ const projectRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 
 export default defineConfig({
   root: projectRoot,
+  resolve: {
+    alias: {
+      "@main": resolve(projectRoot, "chrome-extension/src/main"),
+      "@test": resolve(projectRoot, "chrome-extension/src/test"),
+    },
+  },
   test: {
     environment: 'node',
     include: ['chrome-extension/src/test/unit/**/*.test.ts'],

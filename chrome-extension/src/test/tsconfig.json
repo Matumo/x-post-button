@@ -1,19 +1,20 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "es2021",
     "module": "esnext",
     "lib": ["es2021", "dom"],
-    "types": ["chrome"],
+    "types": ["chrome", "node"],
     "strict": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@main/*": ["src/main/*"],
-      "@test/*": ["src/test/*"]
+      "@main/*": ["../main/*"],
+      "@test/*": ["../test/*"]
     }
   },
   "include": [
-    "./src/main/**/*.ts"
+    "./**/*.test.ts"
   ]
 }

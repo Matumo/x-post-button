@@ -1,8 +1,13 @@
 import { setDefaultConfig, setLoggerConfig, getLogger } from "ts-simple-logger";
 
-setDefaultConfig({ level: "info" });
-setLoggerConfig("app", { level: "info" });
-const log = getLogger("app");
+setDefaultConfig({
+  placeholders: { "%appName": "x-post-button" },
+  prefixFormat: "[%appName] (%loggerName) %logLevel:"
+});
+setLoggerConfig("main", {
+  level: "info"
+});
+const log = getLogger("main");
 
 const handleBrowserErrors = (): void => {
   if (typeof globalThis.addEventListener !== 'function') {

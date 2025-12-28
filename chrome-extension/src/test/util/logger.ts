@@ -1,7 +1,12 @@
 import { setDefaultConfig, setLoggerConfig, getLogger } from "ts-simple-logger";
 
-setDefaultConfig({ level: "info" });
-setLoggerConfig("test", { level: "debug" });
+setDefaultConfig({
+  placeholders: { "%appName": "x-post-button" },
+  prefixFormat: "[%appName] (%loggerName) %logLevel:"
+});
+setLoggerConfig("test", {
+  level: "debug"
+});
 const log = getLogger("test");
 
 const handleBrowserErrors = (): void => {

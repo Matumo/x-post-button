@@ -1,0 +1,38 @@
+{
+  "engines": {
+    "node": "25.x"
+  },
+  "scripts": {
+    "lint:fix": "eslint --config ./chrome-extension/eslint.config.mts ./chrome-extension --max-warnings=0 --fix",
+    "lint": "eslint --config ./chrome-extension/eslint.config.mts ./chrome-extension --max-warnings=0",
+    "build:clean": "rm -rf chrome-extension-dist/",
+    "build:check": "tsc --noEmit -p ./chrome-extension/tsconfig.json && tsc --noEmit -p ./chrome-extension/src/test/tsconfig.json",
+    "build:vite": "vite build --config ./chrome-extension/vite.config.ts",
+    "build:zip": "zip -r ./chrome-extension-dist/chrome-extension.zip ./chrome-extension-dist -x '*.DS_Store'",
+    "build": "npm run build:clean && npm run build:check && npm run build:vite && npm run build:zip",
+    "test:clean": "rm -rf test-results/ coverage/",
+    "test:unit": "vitest run --config ./chrome-extension/vitest.config.ts",
+    "test:unit:coverage": "vitest run --config ./chrome-extension/vitest.config.ts --coverage"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@eslint/json": "^0.14.0",
+    "@playwright/test": "^1.57.0",
+    "@types/chrome": "^0.1.32",
+    "@types/node": "^25.0.3",
+    "@types/pngjs": "^6.0.5",
+    "@vitest/coverage-v8": "^4.0.16",
+    "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "jiti": "^2.6.1",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.50.1",
+    "vite": "^7.3.0",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "ts-simple-logger": "git+https://github.com/Matumo/ts-simple-logger.git#v0.1.0"
+  }
+}

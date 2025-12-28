@@ -27,7 +27,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: chrome-extension
-          path: ./chrome-extension-dist/chrome-extension.zip
+          path: ./dist/chrome-extension
       # Unit Tests
       - name: Run tests with coverage
         run: npm run test:unit:coverage

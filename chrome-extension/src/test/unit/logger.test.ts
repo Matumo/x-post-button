@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { log } from '@test/util/logger.js';
+import { log } from '@test/util/logger';
 log.debug("test logger.test.ts");
 
 describe('logger挙動検証', () => {
@@ -31,7 +31,7 @@ describe('logger挙動検証', () => {
       'addEventListener',
       (type: string, listener: EventListenerOrEventListenerObject) => {
         listeners[type] = listeners[type] ?? [];
-        listeners[type]!.push(listener);
+        listeners[type].push(listener);
       },
     );
 
@@ -63,7 +63,7 @@ describe('logger挙動検証', () => {
       ...process,
       on: (event: 'uncaughtException' | 'unhandledRejection', listener: (reason: unknown) => void) => {
         listeners[event] = listeners[event] ?? [];
-        listeners[event]!.push(listener);
+        listeners[event].push(listener);
       },
     });
 

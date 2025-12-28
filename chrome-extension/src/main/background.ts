@@ -1,4 +1,4 @@
-import log from '@main/util/logger.js';
+import log from '@main/util/logger';
 
 type WindowBounds = { width: number; height: number; left: number; top: number };
 

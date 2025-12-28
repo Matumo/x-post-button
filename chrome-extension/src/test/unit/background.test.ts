@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { log } from '@test/util/logger.js';
+import { log } from '@test/util/logger';
 log.debug("test background.test.ts");
 
 // テストで扱いやすいようにChrome提供の型を最小構成で再定義

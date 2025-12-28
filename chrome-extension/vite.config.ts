@@ -14,7 +14,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: resolve(projectRoot, "chrome-extension-dist"), // ルート基準にしないため絶対パスで指定
+    outDir: resolve(projectRoot, "dist/chrome-extension"), // ルート基準にしないため絶対パスで指定
     emptyOutDir: true,
     minify: true,
     sourcemap: true,

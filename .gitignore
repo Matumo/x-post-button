@@ -238,7 +238,7 @@ $RECYCLE.BIN/
 
 
 # Build output
-chrome-extension-dist/
+dist/
 
 # debug
 runner/

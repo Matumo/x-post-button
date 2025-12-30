@@ -28,11 +28,11 @@
     "jiti": "^2.6.1",
     "pngjs": "^7.0.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.1",
+    "typescript-eslint": "^8.51.0",
     "vite": "^7.3.0",
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "ts-simple-logger": "git+https://github.com/Matumo/ts-simple-logger.git#v0.1.0"
+    "ts-simple-logger": "git+https://github.com/Matumo/ts-simple-logger.git#v0.2.2"
   }
 }

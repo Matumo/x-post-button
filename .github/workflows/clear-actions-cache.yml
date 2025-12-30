@@ -1,0 +1,20 @@
+name: Clear GitHub Actions cache
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          gh cache delete --all --succeed-on-no-caches

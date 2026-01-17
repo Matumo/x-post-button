@@ -10,7 +10,7 @@ import {
 import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import log from '../util/logger.js';
+import log from '@test/util/logger.js';
 import {
   createBrowserTestObserver,
 } from '@test/util/log-capture/browser-test-observer';
@@ -20,7 +20,7 @@ import {
 import {
   startTestWebServer,
   type TestWebServer,
-} from '../util/web-server/server';
+} from '@test/util/web-server/server';
 
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');

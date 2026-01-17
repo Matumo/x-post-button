@@ -19,20 +19,22 @@ RUN apt-get update && \
     zip \
     libatomic1 \
     openjdk-25-jdk \
+    x11-apps \
+    imagemagick \
   && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk-${TARGETARCH}
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-RUN sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
-  && locale-gen
+RUN sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
-RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
-  && useradd -s /bin/bash --uid "${USER_UID}" --gid "${USER_GID}" -m "${USERNAME}" \
-  && echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" \
-  && chmod 0440 "/etc/sudoers.d/${USERNAME}"
+RUN groupadd --gid "${USER_GID}" "${USERNAME}" && \
+  useradd -s /bin/bash --uid "${USER_UID}" --gid "${USER_GID}" -m "${USERNAME}" && \
+  echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" && \
+  chmod 0440 "/etc/sudoers.d/${USERNAME}"
+USER ${USERNAME}
 
 # Node.js 25
 RUN apt-get update && \
@@ -42,5 +44,3 @@ RUN apt-get update && \
     apt-get purge -y nodejs npm && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
-
-USER ${USERNAME}

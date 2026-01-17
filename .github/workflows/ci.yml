@@ -75,17 +75,14 @@ jobs:
           path: coverage
   browser-test:
     needs: env
-    strategy:
-      matrix:
-        os: ${{ needs.env.outputs.default_os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ needs.env.outputs.default_os }}
     steps:
       # Setup
       - uses: actions/checkout@v6
       - name: Prepare environment
         uses: ./.github/actions/project-setup
         with:
-          runs-on: ${{ matrix.os }}
+          runs-on: ${{ needs.env.outputs.default_os }}
           node-version: ${{ needs.env.outputs.default_node }}
       # Ubuntu: xwd (x11-apps) + convert (imagemagick)
       - name: Install deps (Ubuntu)

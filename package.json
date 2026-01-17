@@ -18,9 +18,11 @@
     "build:clean": "npm run clean:dist",
     "build:bundle": "vite build --config ./chrome-extension/vite.config.ts",
     "build:zip": "zip -r ./dist/chrome-extension.zip ./dist/chrome-extension -x '*.DS_Store'",
-    "test": "npm run test:unit",
+    "test": "npm run test:unit:coverage && npm run test:browser:unit",
+    "test:install": "playwright install --with-deps",
     "test:unit": "vitest run --config ./chrome-extension/vitest.config.ts",
     "test:unit:coverage": "vitest run --config ./chrome-extension/vitest.config.ts --coverage",
+    "test:browser:unit": "playwright test --config ./chrome-extension/playwright.config.ts --project browser-unit",
     "all": "npm run clean && npm run check && npm run build && npm run test"
   },
   "devDependencies": {

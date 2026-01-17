@@ -77,7 +77,7 @@ jobs:
     needs: env
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: ${{ needs.env.outputs.default_os }}
     runs-on: ${{ matrix.os }}
     steps:
       # Setup
@@ -89,17 +89,9 @@ jobs:
           node-version: ${{ needs.env.outputs.default_node }}
       # Ubuntu: xwd (x11-apps) + convert (imagemagick)
       - name: Install deps (Ubuntu)
-        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y x11-apps imagemagick
-      # macOS: xwd (XQuartz) + ImageMagick
-      - name: Install deps (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew update
-          brew install --cask xquartz
-          brew install imagemagick
       - name: Install Playwright browsers
         env:
           RETRIES: 3

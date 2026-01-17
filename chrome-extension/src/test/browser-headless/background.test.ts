@@ -116,7 +116,7 @@ const runShareTargetFlow = async (
   log.info("finish");
 
   expect(popupPage.url()).toContain('https://x.com/intent/post');
-  log.info("end");
+
   await popupPage.close();
   await shareTargetPage.close();
   await extensionsPage.close();

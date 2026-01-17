@@ -13,13 +13,13 @@ export default defineConfig({
   ...baseProject,
   projects: [
     {
-      name: 'browser-unit',
-      testDir: "./src/test/browser-unit",
+      name: 'browser-headless',
+      testDir: "./src/test/browser-headless",
       testMatch: ['**/*.test.ts'],
     },
     {
-      name: 'browser-integration',
-      testDir: "./src/test/browser-integration",
+      name: 'browser-xvfb',
+      testDir: "./src/test/browser-xvfb",
       testMatch: ['**/*.test.ts'],
     },
   ],

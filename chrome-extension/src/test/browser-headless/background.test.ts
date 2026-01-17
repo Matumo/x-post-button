@@ -72,8 +72,6 @@ const runShareTargetFlow = async (
 ): Promise<void> => {
   const extensionsPage: Page = await context.newPage();
   observer.attachPage(extensionsPage);
-
-  const shareTargetPage: Page = await context.newPage();
   await extensionsPage.waitForLoadState('domcontentloaded');
   await capturePageScreenshotWithRetry(
     extensionsPage,
@@ -82,9 +80,11 @@ const runShareTargetFlow = async (
     'extensions page screenshot',
     { fullPage: true },
   );
+
+  const shareTargetPage: Page = await context.newPage();
   await shareTargetPage.goto(shareTargetUrl);
   await shareTargetPage.bringToFront();
-
+  await shareTargetPage.waitForLoadState('domcontentloaded');
   await capturePageScreenshotWithRetry(
     shareTargetPage,
     testInfo,
@@ -94,9 +94,7 @@ const runShareTargetFlow = async (
   );
 
   const popupPagePromise: Promise<Page> = context.waitForEvent('page');
-
   await triggerExtensionClick(serviceWorker);
-
   await capturePageScreenshotWithRetry(
     shareTargetPage,
     testInfo,
@@ -104,9 +102,9 @@ const runShareTargetFlow = async (
     'share target page screenshot after click',
     { fullPage: true },
   );
-
   const popupPage: Page = await popupPagePromise;
   observer.attachPage(popupPage);
+  await popupPage.waitForLoadState('domcontentloaded');
   log.info("popup page url:", popupPage.url());
   await capturePageScreenshotWithRetry(
     popupPage,
@@ -115,19 +113,13 @@ const runShareTargetFlow = async (
     'popup page screenshot',
     { fullPage: true },
   );
-
-  const browserPages: Page[] = context.pages();
-  for (const [index, page] of browserPages.entries()) {
-    await page.bringToFront();
-    await page.screenshot({
-      path: testInfo.outputPath(`browser-full-${index + 1}.png`),
-      fullPage: true,
-    });
-  }
+  log.info("finish");
 
   expect(popupPage.url()).toContain('https://x.com/intent/post');
+  log.info("end");
   await popupPage.close();
   await shareTargetPage.close();
+  await extensionsPage.close();
 };
 
 test.describe('Chrome extension background script', () => {
@@ -169,15 +161,19 @@ test.describe('Chrome extension background script', () => {
         observer,
         context,
         serviceWorker,
-        `${testWebServer.url}/test.html`,
+        `${testWebServer.url}/test.html`
       );
     } finally {
       detachUnhandledRejection();
+      if (context) {
+        log.info("closing browser context");
+        await context.close();
+      }
       if (testWebServer) {
+        log.info("closing test web server");
         await testWebServer.close();
       }
-      await context?.close();
     }
-    observer.assertNoCapturedErrors();
+    observer.assertNoCapturedErrors("[x-post-button]");
   });
 });

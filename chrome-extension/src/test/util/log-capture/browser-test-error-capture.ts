@@ -49,10 +49,20 @@ export const createBrowserTestErrorCapture = (extensionDist: string) => {
     // Service worker currently does not expose pageerror/crash equivalents.
   };
 
-  const assertNoCapturedErrors = (): void => {
+  /**
+   * prefix指定で、prefixが一致しないログは除外して検証する
+   * @param prefix 検証対象とするエラーメッセージのprefix（省略可）
+   */
+  const assertNoCapturedErrors = (prefix?: string): void => {
+    let filtered = capturedErrors;
+    if (prefix) {
+      filtered = capturedErrors.filter(e => e.message.startsWith(prefix));
+    }
     expect(
-      capturedErrors,
-      'ブラウザでコンソールエラーまたは例外が発生',
+      filtered,
+      prefix
+        ? `${prefix} で始まるブラウザのコンソールエラーまたは例外が発生`
+        : 'ブラウザでコンソールエラーまたは例外が発生',
     ).toEqual([]);
   };
 

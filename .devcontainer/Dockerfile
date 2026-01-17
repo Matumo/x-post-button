@@ -20,6 +20,7 @@ RUN apt-get update && \
     libatomic1 \
     openjdk-25-jdk \
     x11-apps \
+    imagemagick \
   && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk-${TARGETARCH}

@@ -18,11 +18,13 @@
     "build:clean": "npm run clean:dist",
     "build:bundle": "vite build --config ./chrome-extension/vite.config.ts",
     "build:zip": "zip -r ./dist/chrome-extension.zip ./dist/chrome-extension -x '*.DS_Store'",
-    "test": "npm run test:unit:coverage && npm run test:browser:unit",
+    "test": "npm run test:unit:coverage && npm run test:browser",
     "test:install": "playwright install --with-deps",
     "test:unit": "vitest run --config ./chrome-extension/vitest.config.ts",
     "test:unit:coverage": "vitest run --config ./chrome-extension/vitest.config.ts --coverage",
-    "test:browser:unit": "playwright test --config ./chrome-extension/playwright.config.ts --project browser-unit",
+    "test:browser": "npm run test:browser:headless && npm run test:browser:xvfb",
+    "test:browser:headless": "npm run build && playwright test --config ./chrome-extension/playwright.config.ts --project browser-headless",
+    "test:browser:xvfb": "npm run build && xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' npx playwright test --config ./chrome-extension/playwright.config.ts --project browser-xvfb",
     "all": "npm run clean && npm run check && npm run build && npm run test"
   },
   "devDependencies": {

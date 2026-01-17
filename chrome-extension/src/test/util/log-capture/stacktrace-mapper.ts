@@ -9,17 +9,15 @@ export type StackMappingResult = {
 };
 
 const getChromeExtensionJsPath = (file: string): string | undefined => {
-  const directUrlMatch: RegExpMatchArray | null = file.match(
-    /^chrome-extension:\/\/[a-p]{32}(\/.*\.js)$/,
-  );
+  const directUrlRegex = /^chrome-extension:\/\/[a-p]{32}(\/.*\.js)$/;
+  const directUrlMatch = directUrlRegex.exec(file);
   if (directUrlMatch) return directUrlMatch[1];
 
   const normalizedIdx: number = file.indexOf('chrome-extension:/');
   if (normalizedIdx === -1) return undefined;
   const rest: string = file.slice(normalizedIdx + 'chrome-extension:/'.length);
-  const normalizedMatch: RegExpMatchArray | null = rest.match(
-    /^[a-p]{32}(\/.*\.js)$/,
-  );
+  const normalizedRegex = /^[a-p]{32}(\/.*\.js)$/;
+  const normalizedMatch = normalizedRegex.exec(rest);
   return normalizedMatch ? normalizedMatch[1] : undefined;
 };
 

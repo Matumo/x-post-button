@@ -50,6 +50,6 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "@matumo/ts-simple-logger": "^0.4.0"
+    "@matumo/ts-simple-logger": "^0.4.1"
   }
 }

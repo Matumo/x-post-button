@@ -12,6 +12,7 @@ RUN apt-get update && \
     ca-certificates \
     curl \
     git \
+    ssh \
     gnupg \
     locales \
     sudo \
@@ -30,11 +31,10 @@ RUN sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && local
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
-RUN groupadd --gid "${USER_GID}" "${USERNAME}" && \
-  useradd -s /bin/bash --uid "${USER_UID}" --gid "${USER_GID}" -m "${USERNAME}" && \
-  echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" && \
-  chmod 0440 "/etc/sudoers.d/${USERNAME}"
-USER ${USERNAME}
+RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
+  && useradd -s /bin/bash --uid "${USER_UID}" --gid "${USER_GID}" -m "${USERNAME}" \
+  && echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" \
+  && chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
 # Node.js 25
 RUN apt-get update && \
@@ -44,3 +44,5 @@ RUN apt-get update && \
     apt-get purge -y nodejs npm && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
+
+USER ${USERNAME}

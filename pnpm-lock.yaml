@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      ts-simple-logger:
-        specifier: git+git@github.com:Matumo/ts-simple-logger.git#v0.3.0
-        version: https://codeload.github.com/Matumo/ts-simple-logger/tar.gz/20cbec226e7d6b51c868e837a922c52028a7e428
+      '@matumo/ts-simple-logger':
+        specifier: ^0.4.0
+        version: 0.4.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.2
@@ -328,6 +328,10 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@matumo/ts-simple-logger@0.4.0':
+    resolution: {integrity: sha512-+/RXMvlT3tgiiMLTyu0xiPhL/8TmzRXbKQ0QyL5/PTkPCdM1luIncM2sIqc8Fse+6iI5z62RoBnV7OQCEUtVaw==}
+    engines: {node: '>=24 <26'}
 
   '@playwright/test@1.58.0':
     resolution: {integrity: sha512-fWza+Lpbj6SkQKCrU6si4iu+fD2dD3gxNHFhUPxsfXBPhnv3rRSQVd0NtBUT9Z/RhF/boCBcuUaMUSTRTopjZg==}
@@ -1042,11 +1046,6 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-simple-logger@https://codeload.github.com/Matumo/ts-simple-logger/tar.gz/20cbec226e7d6b51c868e837a922c52028a7e428:
-    resolution: {tarball: https://codeload.github.com/Matumo/ts-simple-logger/tar.gz/20cbec226e7d6b51c868e837a922c52028a7e428}
-    version: 0.3.0
-    engines: {node: '>=24 <26'}
-
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
@@ -1336,6 +1335,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@matumo/ts-simple-logger@0.4.0': {}
 
   '@playwright/test@1.58.0':
     dependencies:
@@ -2049,8 +2050,6 @@ snapshots:
   ts-api-utils@2.4.0(typescript@5.9.3):
     dependencies:
       typescript: 5.9.3
-
-  ts-simple-logger@https://codeload.github.com/Matumo/ts-simple-logger/tar.gz/20cbec226e7d6b51c868e837a922c52028a7e428: {}
 
   type-check@0.4.0:
     dependencies:

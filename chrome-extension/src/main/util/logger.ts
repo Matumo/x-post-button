@@ -1,4 +1,4 @@
-import { setDefaultConfig, setLoggerConfig, getLogger } from "ts-simple-logger";
+import { setDefaultConfig, setLoggerConfig, getLogger } from "@matumo/ts-simple-logger";
 
 setDefaultConfig({
   placeholders: { "%appName": "x-post-button" },

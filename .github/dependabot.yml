@@ -10,8 +10,6 @@ updates:
     target-branch: "develop"
     schedule:
       interval: daily
-    ignore:
-      - dependency-name: "ts-simple-logger"
     groups:
       npm-all:
         patterns:

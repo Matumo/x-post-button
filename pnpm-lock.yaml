@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       ts-simple-logger:
-        specifier: git+https://github.com/Matumo/ts-simple-logger.git#v0.3.0
+        specifier: git+git@github.com:Matumo/ts-simple-logger.git#v0.3.0
         version: https://codeload.github.com/Matumo/ts-simple-logger/tar.gz/20cbec226e7d6b51c868e837a922c52028a7e428
     devDependencies:
       '@eslint/js':

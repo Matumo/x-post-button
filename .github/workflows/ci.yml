@@ -40,6 +40,11 @@ jobs:
       # Build
       - name: Build
         run: pnpm run build
+      - name: Upload build artifact (zip)
+        uses: actions/upload-artifact@v6
+        with:
+          name: build-artifact
+          path: dist/chrome-extension.zip
   check:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}

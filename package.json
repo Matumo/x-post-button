@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@eslint/json": "^0.14.0",
+    "@eslint/json": "^1.0.0",
     "@jridgewell/trace-mapping": "^0.3.31",
     "@playwright/test": "^1.57.0",
     "@types/chrome": "^0.1.33",

@@ -1,6 +1,4 @@
 name: CI
-permissions:
-  contents: read
 
 on:
   push:
@@ -14,6 +12,7 @@ on:
 jobs:
   env:
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       default_os: ${{ steps.set.outputs.default_os }}
       default_node: ${{ steps.set.outputs.default_node }}
@@ -29,6 +28,8 @@ jobs:
   build:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}
+    permissions:
+      contents: read
     steps:
       # Setup
       - uses: actions/checkout@v6
@@ -48,6 +49,8 @@ jobs:
   check:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}
+    permissions:
+      contents: read
     steps:
       # Setup
       - uses: actions/checkout@v6
@@ -62,6 +65,8 @@ jobs:
   unit-test-coverage:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}
+    permissions:
+      contents: read
     steps:
       # Setup
       - uses: actions/checkout@v6
@@ -81,6 +86,8 @@ jobs:
   browser-test:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}
+    permissions:
+      contents: read
     steps:
       # Setup
       - uses: actions/checkout@v6

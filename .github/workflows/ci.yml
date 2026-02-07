@@ -48,7 +48,7 @@ jobs:
       - name: Upload build artifact (zip)
         uses: actions/upload-artifact@v6
         with:
-          name: build-artifact
+          name: build-artifact-${{ needs.env.outputs.default_os }}
           path: dist/chrome-extension.zip
   check:
     needs: env
@@ -86,7 +86,7 @@ jobs:
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v6
         with:
-          name: unit-test-coverage-${{ runner.os }}
+          name: unit-test-coverage-${{ needs.env.outputs.default_os }}
           path: coverage
   browser-test-headless:
     needs: env
@@ -134,7 +134,7 @@ jobs:
       - name: Upload browser test artifact
         uses: actions/upload-artifact@v6
         with:
-          name: browser-test-headless-artifact-${{ runner.os }}
+          name: browser-test-headless-artifact-${{ matrix.os }}
           path: test-results
   browser-test-integration:
     needs: env
@@ -184,5 +184,5 @@ jobs:
       - name: Upload browser test artifact
         uses: actions/upload-artifact@v6
         with:
-          name: browser-test-integration-artifact-${{ runner.os }}
+          name: browser-test-integration-artifact-${{ needs.env.outputs.default_os }}
           path: test-results

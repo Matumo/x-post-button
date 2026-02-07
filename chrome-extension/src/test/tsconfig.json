@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2021",
+    "target": "es2022",
     "module": "esnext",
-    "lib": ["es2021", "dom"],
+    "lib": ["es2022", "dom"],
     "types": ["chrome", "node"],
     "strict": true,
     "skipLibCheck": true,

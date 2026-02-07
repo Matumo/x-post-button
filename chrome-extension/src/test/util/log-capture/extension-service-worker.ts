@@ -39,6 +39,7 @@ export const waitForExtensionServiceWorker = async (
       error instanceof Error ? error.message : String(error);
     throw new Error(
       `拡張機能の Service Worker を検出できませんでした: ${reason}`,
+      { cause: error },
     );
   }
 };

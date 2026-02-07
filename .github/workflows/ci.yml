@@ -83,7 +83,48 @@ jobs:
         with:
           name: unit-test-coverage
           path: coverage
-  browser-test:
+  browser-test-headless:
+    needs: env
+    strategy:
+      matrix:
+        os: ${{ fromJson(needs.env.outputs.matrix_os) }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      # Setup
+      - uses: actions/checkout@v6
+      - name: Prepare environment
+        uses: ./.github/actions/project-setup
+        with:
+          runs-on: ${{ matrix.os }}
+          node-version: ${{ needs.env.outputs.default_node }}
+      - name: Install Playwright browsers
+        env:
+          RETRIES: 3
+          WAIT_SECONDS: 10
+          RUN_CMD: pnpm run test:install
+        shell: bash
+        run: |
+          retries=${RETRIES:-3}
+          wait_seconds=${WAIT_SECONDS:-10}
+          run_cmd=${RUN_CMD:-"pnpm run test:install"}
+          for attempt in $(seq 1 "$retries"); do
+            if $run_cmd; then
+              break
+            fi
+            status=$?
+            if [ "$attempt" -lt "$retries" ]; then
+              echo "::warning::Command failed (attempt $attempt/$retries). Retrying in ${wait_seconds}s..."
+              sleep "$wait_seconds"
+            else
+              echo "::error::Command failed after $retries attempts."
+              exit "$status"
+            fi
+          done
+      - name: Run browser integration tests (headless)
+        run: pnpm run test:browser:headless
+  browser-test-integration:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}
     permissions:
@@ -124,5 +165,5 @@ jobs:
               exit "$status"
             fi
           done
-      - name: Run browser integration tests
-        run: pnpm run test:browser
+      - name: Run browser integration tests (xvfb)
+        run: pnpm run test:browser:xvfb

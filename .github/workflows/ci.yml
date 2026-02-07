@@ -41,6 +41,10 @@ jobs:
       # Build
       - name: Build
         run: pnpm run build
+      # Pack
+      - name: Pack extension
+        run: pnpm run pack
+      # Upload artifact
       - name: Upload build artifact (zip)
         uses: actions/upload-artifact@v6
         with:

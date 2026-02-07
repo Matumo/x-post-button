@@ -41,10 +41,14 @@ jobs:
       # Build
       - name: Build
         run: pnpm run build
+      # Pack
+      - name: Pack extension
+        run: pnpm run pack
+      # Upload artifact
       - name: Upload build artifact (zip)
         uses: actions/upload-artifact@v6
         with:
-          name: build-artifact
+          name: build-artifact-${{ needs.env.outputs.default_os }}
           path: dist/chrome-extension.zip
   check:
     needs: env
@@ -78,12 +82,61 @@ jobs:
       # Unit Tests with coverage
       - name: Run tests with coverage
         run: pnpm run test:unit:coverage
+      # Upload coverage artifact
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v6
         with:
-          name: unit-test-coverage
+          name: unit-test-coverage-${{ needs.env.outputs.default_os }}
           path: coverage
-  browser-test:
+  browser-test-headless:
+    needs: env
+    strategy:
+      matrix:
+        os: ${{ fromJson(needs.env.outputs.matrix_os) }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      # Setup
+      - uses: actions/checkout@v6
+      - name: Prepare environment
+        uses: ./.github/actions/project-setup
+        with:
+          runs-on: ${{ matrix.os }}
+          node-version: ${{ needs.env.outputs.default_node }}
+      - name: Install Playwright browsers
+        env:
+          RETRIES: 3
+          WAIT_SECONDS: 10
+          RUN_CMD: pnpm run test:install
+        shell: bash
+        run: |
+          retries=${RETRIES:-3}
+          wait_seconds=${WAIT_SECONDS:-10}
+          run_cmd=${RUN_CMD:-"pnpm run test:install"}
+          for attempt in $(seq 1 "$retries"); do
+            if $run_cmd; then
+              break
+            fi
+            status=$?
+            if [ "$attempt" -lt "$retries" ]; then
+              echo "::warning::Command failed (attempt $attempt/$retries). Retrying in ${wait_seconds}s..."
+              sleep "$wait_seconds"
+            else
+              echo "::error::Command failed after $retries attempts."
+              exit "$status"
+            fi
+          done
+      # Tests
+      - name: Run browser integration tests (headless)
+        run: pnpm run test:browser:headless
+      # Upload browser test artifact
+      - name: Upload browser test artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: browser-test-headless-artifact-${{ matrix.os }}
+          path: test-results
+  browser-test-integration:
     needs: env
     runs-on: ${{ needs.env.outputs.default_os }}
     permissions:
@@ -124,5 +177,12 @@ jobs:
               exit "$status"
             fi
           done
-      - name: Run browser integration tests
-        run: pnpm run test:browser
+      # Tests
+      - name: Run browser integration tests (xvfb)
+        run: pnpm run test:browser:xvfb
+      # Upload browser test artifact
+      - name: Upload browser test artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: browser-test-integration-artifact-${{ needs.env.outputs.default_os }}
+          path: test-results

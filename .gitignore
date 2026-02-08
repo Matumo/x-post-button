@@ -237,6 +237,9 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/node,git,macos,windows,visualstudiocode
 
 
+# pnpm
+.pnpm-store/
+
 # Build output
 dist/
 

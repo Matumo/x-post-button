@@ -47,6 +47,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable \
-  && corepack prepare pnpm@10.27.0 --activate
+  && corepack prepare pnpm@10.30.1 --activate
 
 USER ${USERNAME}

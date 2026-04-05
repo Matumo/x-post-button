@@ -242,8 +242,8 @@ $RECYCLE.BIN/
 
 # Build output
 dist/
-
-# debug
-runner/
 test-results/
 coverage/
+
+# debug
+tmp/

@@ -25,32 +25,17 @@ import {
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
 
-const triggerExtensionClick = async (serviceWorker: Worker): Promise<void> => {
-  await serviceWorker.evaluate(async () => {
-    const activeTab: chrome.tabs.Tab = await new Promise<chrome.tabs.Tab>((resolve, reject) => {
-      chrome.tabs.query(
-        { active: true, currentWindow: true },
-        (tabs: chrome.tabs.Tab[]) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          const tab: chrome.tabs.Tab | undefined = tabs[0];
-          if (!tab) {
-            reject(new Error('No active tab found'));
-            return;
-          }
-          resolve(tab);
-        },
-      );
-    });
-
+const triggerExtensionClick = async (
+  serviceWorker: Worker,
+  tab: Pick<chrome.tabs.Tab, 'title' | 'url'>,
+): Promise<void> => {
+  await serviceWorker.evaluate(async (clickedTab) => {
     const onClicked: { dispatch: (tab: chrome.tabs.Tab) => void } =
       chrome.action.onClicked as unknown as {
         dispatch: (tab: chrome.tabs.Tab) => void;
       };
-    onClicked.dispatch(activeTab);
-  });
+    onClicked.dispatch(clickedTab as chrome.tabs.Tab);
+  }, tab);
 };
 
 const getOrWaitServiceWorker = async (
@@ -85,6 +70,10 @@ const runShareTargetFlow = async (
   await shareTargetPage.goto(shareTargetUrl);
   await shareTargetPage.bringToFront();
   await shareTargetPage.waitForLoadState('domcontentloaded');
+  const shareTargetTab: Pick<chrome.tabs.Tab, 'title' | 'url'> = {
+    title: await shareTargetPage.title(),
+    url: shareTargetPage.url(),
+  };
   await capturePageScreenshotWithRetry(
     shareTargetPage,
     testInfo,
@@ -94,7 +83,7 @@ const runShareTargetFlow = async (
   );
 
   const popupPagePromise: Promise<Page> = context.waitForEvent('page');
-  await triggerExtensionClick(serviceWorker);
+  await triggerExtensionClick(serviceWorker, shareTargetTab);
   await capturePageScreenshotWithRetry(
     shareTargetPage,
     testInfo,

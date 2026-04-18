@@ -15,7 +15,7 @@ const parseBooleanFlag = (value: string, fieldName: string, lineNumber: number):
   if (value === 'FALSE') {
     return false;
   }
-  throw new Error(`cookies.txtの${lineNumber}行目の${fieldName}にはTRUEまたはFALSEを指定してください`);
+  throw new TypeError(`cookies.txtの${lineNumber}行目の${fieldName}にはTRUEまたはFALSEを指定してください`);
 };
 
 const splitCookieLine = (line: string): string[] =>
@@ -24,7 +24,7 @@ const splitCookieLine = (line: string): string[] =>
 const parseExpires = (value: string, lineNumber: number): number | undefined => {
   const expires = Number(value);
   if (!Number.isFinite(expires)) {
-    throw new Error(`cookies.txtの${lineNumber}行目の有効期限が数値ではありません`);
+    throw new TypeError(`cookies.txtの${lineNumber}行目の有効期限が数値ではありません`);
   }
   return expires > 0 ? expires : undefined;
 };
@@ -37,7 +37,7 @@ const parseCookieLine = (line: string, lineNumber: number): LoginCookie | undefi
 
   const fields = splitCookieLine(trimmedLine);
   if (fields.length < 7) {
-    throw new Error(`cookies.txtの${lineNumber}行目の形式が不正です`);
+    throw new TypeError(`cookies.txtの${lineNumber}行目の形式が不正です`);
   }
 
   const [rawDomain, , path, secureFlag, expiresText, name, ...valueParts] = fields;
@@ -46,7 +46,7 @@ const parseCookieLine = (line: string, lineNumber: number): LoginCookie | undefi
   const value = valueParts.join(line.includes('\t') ? '\t' : ' ');
 
   if (!domain || !path || !name) {
-    throw new Error(`cookies.txtの${lineNumber}行目にdomain/path/nameのいずれかがありません`);
+    throw new TypeError(`cookies.txtの${lineNumber}行目にdomain/path/nameのいずれかがありません`);
   }
 
   const cookie: LoginCookie = {

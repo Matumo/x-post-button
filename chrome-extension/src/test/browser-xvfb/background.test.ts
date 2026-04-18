@@ -24,9 +24,12 @@ import {
   capturePageScreenshotWithRetry,
   captureXvfbScreenshotWithRetry,
 } from '@test/util/screenshot.js';
+import { applyLoginCookiesFromEnv } from '@test/util/login-cookies.js';
 
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
+// ログインが必要なテストを実行する場合はLOGIN_TEST=1とLOGIN_COOKIES_TEXTを環境変数に設定する。
+const shouldRunLoginTest: boolean = process.env.LOGIN_TEST === '1';
 
 async function setWindowSize(context: BrowserContext, page: Page,
                              width: number, height: number,
@@ -373,11 +376,26 @@ const runShareTargetFlow = async (
   };
   await assertSs4NestedRectangles();
 
-  expect(popupPage.url()).toContain('https://x.com/intent/post');
-  const tweetTextarea_0 = popupPage.getByTestId('tweetTextarea_0');
-  const value = await tweetTextarea_0.innerText();
-  expect(value).toContain('TEST_PAGE_TITLE');
-  expect(value).toContain(shareTargetUrl);
+  const popupUrl = new URL(popupPage.url());
+  expect(`${popupUrl.origin}${popupUrl.pathname}`).toBe('https://x.com/intent/post');
+  const popupText = popupUrl.searchParams.get('text');
+  expect(popupText).toContain('TEST_PAGE_TITLE');
+  expect(popupText).toContain(shareTargetUrl);
+  if (shouldRunLoginTest) {
+    const tweetTextarea_0 = popupPage.getByTestId('tweetTextarea_0');
+    const popupContentState = await Promise.race([
+      tweetTextarea_0.waitFor({ state: 'visible', timeout: 10_000 }).then(() => 'textarea' as const),
+      popupPage.getByText(/Hmm.*this page doesn.t exist/)
+        .waitFor({ state: 'visible', timeout: 10_000 }).then(() => 'not-found' as const),
+    ]);
+    if (popupContentState === 'not-found') {
+      const title = await popupPage.title();
+      throw new Error("ポップアップのページが見つかりません。タイトル: " + title);
+    }
+    const value = await tweetTextarea_0.innerText();
+    expect(value).toContain('TEST_PAGE_TITLE');
+    expect(value).toContain(shareTargetUrl);
+  }
 
   await popupPage.close();
   await page.close();
@@ -410,6 +428,7 @@ test.describe('Chrome extension background script', () => {
           `--load-extension=${extensionDist}`,
         ],
       });
+      await applyLoginCookiesFromEnv(context, shouldRunLoginTest);
 
       const serviceWorker: Worker = await waitForExtensionServiceWorker(context);
       const serviceWorkerUrl: string | undefined = serviceWorker.url();

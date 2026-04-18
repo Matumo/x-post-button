@@ -376,7 +376,11 @@ const runShareTargetFlow = async (
   };
   await assertSs4NestedRectangles();
 
-  expect(popupPage.url()).toContain('https://x.com/intent/post');
+  const popupUrl = new URL(popupPage.url());
+  expect(`${popupUrl.origin}${popupUrl.pathname}`).toBe('https://x.com/intent/post');
+  const popupText = popupUrl.searchParams.get('text');
+  expect(popupText).toContain('TEST_PAGE_TITLE');
+  expect(popupText).toContain(shareTargetUrl);
   if (shouldRunLoginTest) {
     const tweetTextarea_0 = popupPage.getByTestId('tweetTextarea_0');
     const popupContentState = await Promise.race([

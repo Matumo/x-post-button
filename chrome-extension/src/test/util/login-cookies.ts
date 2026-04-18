@@ -29,6 +29,14 @@ const parseExpires = (value: string, lineNumber: number): number | undefined => 
   return expires > 0 ? expires : undefined;
 };
 
+const normalizeCookieDomain = (rawDomain: string, includeSubdomains: boolean): string => {
+  const domain = rawDomain.startsWith(httpOnlyDomainPrefix)
+    ? rawDomain.slice(httpOnlyDomainPrefix.length)
+    : rawDomain;
+  const hostOnlyDomain = domain.replace(/^\.+/, '');
+  return includeSubdomains ? `.${hostOnlyDomain}` : hostOnlyDomain;
+};
+
 const parseCookieLine = (line: string, lineNumber: number): LoginCookie | undefined => {
   const trimmedLine = line.trim();
   if (!trimmedLine || (trimmedLine.startsWith('#') && !trimmedLine.startsWith(httpOnlyDomainPrefix))) {
@@ -40,9 +48,10 @@ const parseCookieLine = (line: string, lineNumber: number): LoginCookie | undefi
     throw new TypeError(`cookies.txtの${lineNumber}行目の形式が不正です`);
   }
 
-  const [rawDomain, , path, secureFlag, expiresText, name, ...valueParts] = fields;
+  const [rawDomain, includeSubdomainsFlag, path, secureFlag, expiresText, name, ...valueParts] = fields;
   const httpOnly = rawDomain.startsWith(httpOnlyDomainPrefix);
-  const domain = httpOnly ? rawDomain.slice(httpOnlyDomainPrefix.length) : rawDomain;
+  const includeSubdomains = parseBooleanFlag(includeSubdomainsFlag, 'include_subdomains', lineNumber);
+  const domain = normalizeCookieDomain(rawDomain, includeSubdomains);
   const value = valueParts.join(line.includes('\t') ? '\t' : ' ');
 
   if (!domain || !path || !name) {

@@ -25,8 +25,12 @@
     "test:browser": "pnpm run test:browser:headless && pnpm run test:browser:xvfb",
     "test:browser:headless": "pnpm run build && playwright test --config ./chrome-extension/playwright.config.ts --project browser-headless",
     "test:browser:xvfb": "pnpm run build && xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' pnpm exec playwright test --config ./chrome-extension/playwright.config.ts --project browser-xvfb",
+    "test:browser:xvfb:login": "LOGIN_TEST=1 pnpm run test:browser:xvfb",
+    "test:browser:xvfb:login:file": "bash ./scripts/test-browser-xvfb-login.sh",
     "pack": "cd dist && find chrome-extension -print | xargs touch -m -t 198001010000.00 && find chrome-extension -type f ! -name '.DS_Store' -print | LC_ALL=C sort | zip -X -q -@ chrome-extension.zip && sha256sum chrome-extension.zip",
-    "all": "pnpm run clean && pnpm run check && pnpm run build && pnpm run test && pnpm run pack"
+    "all": "pnpm run clean && pnpm run check && pnpm run build && pnpm run test && pnpm run pack",
+    "all:login": "pnpm run all && pnpm run test:browser:xvfb:login",
+    "all:login:file": "bash ./scripts/all-login.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

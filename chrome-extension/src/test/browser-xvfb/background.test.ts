@@ -375,6 +375,15 @@ const runShareTargetFlow = async (
 
   expect(popupPage.url()).toContain('https://x.com/intent/post');
   const tweetTextarea_0 = popupPage.getByTestId('tweetTextarea_0');
+  const popupContentState = await Promise.race([
+    tweetTextarea_0.waitFor({ state: 'visible', timeout: 10_000 }).then(() => 'composer' as const),
+    popupPage.getByText(/Hmm.*this page doesn.t exist/)
+      .waitFor({ state: 'visible', timeout: 10_000 }).then(() => 'not-found' as const),
+  ]);
+  if (popupContentState === 'not-found') {
+    const title = await popupPage.title();
+    throw new Error("ポップアップのページが見つかりません。タイトル: " + title);
+  }
   const value = await tweetTextarea_0.innerText();
   expect(value).toContain('TEST_PAGE_TITLE');
   expect(value).toContain(shareTargetUrl);

@@ -24,6 +24,7 @@ import {
 
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
+// headlessテストはログインCookieを設定せず、非ログイン状態でのXのリダイレクトを検証する。
 
 const triggerExtensionClick = async (
   serviceWorker: Worker,
@@ -104,7 +105,13 @@ const runShareTargetFlow = async (
   );
   log.info("finish");
 
-  expect(popupPage.url()).toContain('https://x.com/intent/post');
+  const popupUrl = new URL(popupPage.url());
+  const intentPostUrl = new URL(popupUrl.searchParams.get('redirect_after_login') ?? '', 'https://x.com');
+  const intentPostPath = intentPostUrl.origin + intentPostUrl.pathname;
+  expect(intentPostPath).toBe('https://x.com/intent/post');
+  const popupText = intentPostUrl.searchParams.get('text');
+  expect(popupText).toContain('TEST_PAGE_TITLE');
+  expect(popupText).toContain(shareTargetUrl);
 
   await popupPage.close();
   await shareTargetPage.close();
@@ -116,7 +123,7 @@ test.describe('Chrome extension background script', () => {
     throw new Error('ビルド済みの拡張機能が存在しません');
   }
 
-  test('共有ターゲットのポップアップを検証する', async ({ page: _ }, testInfo) => {
+  test('共有ターゲットのポップアップを検証する（非ログイン）', async ({ page: _ }, testInfo) => {
     const observer = createBrowserTestObserver(extensionDist);
     const detachUnhandledRejection = observer.attachUnhandledRejection();
 

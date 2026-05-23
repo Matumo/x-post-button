@@ -30,6 +30,7 @@ const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
 // ログインが必要なテストを実行する場合はLOGIN_TEST=1とLOGIN_COOKIES_TEXTを環境変数に設定する。
 const shouldRunLoginTest: boolean = process.env.LOGIN_TEST === '1';
+const loginTestNameSuffix: string = shouldRunLoginTest ? 'ログイン' : '非ログイン';
 
 async function setWindowSize(context: BrowserContext, page: Page,
                              width: number, height: number,
@@ -377,8 +378,11 @@ const runShareTargetFlow = async (
   await assertSs4NestedRectangles();
 
   const popupUrl = new URL(popupPage.url());
-  expect(`${popupUrl.origin}${popupUrl.pathname}`).toBe('https://x.com/intent/post');
-  const popupText = popupUrl.searchParams.get('text');
+  const intentPostUrl = shouldRunLoginTest ? popupUrl
+    : new URL(popupUrl.searchParams.get('redirect_after_login') ?? '', 'https://x.com');
+  const intentPostPath = intentPostUrl.origin + intentPostUrl.pathname;
+  expect(intentPostPath).toBe('https://x.com/intent/post');
+  const popupText = intentPostUrl.searchParams.get('text');
   expect(popupText).toContain('TEST_PAGE_TITLE');
   expect(popupText).toContain(shareTargetUrl);
   if (shouldRunLoginTest) {
@@ -406,7 +410,7 @@ test.describe('Chrome extension background script', () => {
     throw new Error('ビルド済みの拡張機能が存在しません');
   }
 
-  test('共有ターゲットのポップアップとスクリーンショットを検証する', async ({ page: _ }, testInfo) => {
+  test('共有ターゲットのポップアップとスクリーンショットを検証する（' + loginTestNameSuffix + '）', async ({ page: _ }, testInfo) => {
     const observer = createBrowserTestObserver(extensionDist);
     const detachUnhandledRejection = observer.attachUnhandledRejection();
 

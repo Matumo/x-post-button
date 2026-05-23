@@ -23,7 +23,7 @@ jobs:
         run: |
           echo "default_os=ubuntu-24.04" >> "$GITHUB_OUTPUT"
           echo "default_node=25.x" >> "$GITHUB_OUTPUT"
-          echo 'matrix_os=["ubuntu-24.04","ubuntu-24.04-arm","windows-2025","windows-11-arm","macos-15-intel","macos-26"]' >> "$GITHUB_OUTPUT"
+          echo 'matrix_os=["ubuntu-22.04","ubuntu-22.04-arm","ubuntu-24.04","ubuntu-24.04-arm","macos-14","macos-15-intel","macos-15","macos-26-intel","macos-26","windows-2022","windows-2025","windows-2025-vs2026","windows-11-arm"]' >> "$GITHUB_OUTPUT"
           echo 'matrix_node=["24.x","25.x"]' >> "$GITHUB_OUTPUT"
   build:
     needs: env

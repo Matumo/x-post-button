@@ -24,17 +24,14 @@ import {
 
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
+// headlessテストはログインCookieを設定せず、非ログイン状態でのXのリダイレクトを検証する。
 
 const triggerExtensionClick = async (
   serviceWorker: Worker,
-  tab: Pick<chrome.tabs.Tab, 'title' | 'url'>,
+  tab: chrome.tabs.Tab,
 ): Promise<void> => {
   await serviceWorker.evaluate(async (clickedTab) => {
-    const onClicked: { dispatch: (tab: chrome.tabs.Tab) => void } =
-      chrome.action.onClicked as unknown as {
-        dispatch: (tab: chrome.tabs.Tab) => void;
-      };
-    onClicked.dispatch(clickedTab as chrome.tabs.Tab);
+    chrome.action.onClicked.dispatch(clickedTab);
   }, tab);
 };
 
@@ -70,9 +67,20 @@ const runShareTargetFlow = async (
   await shareTargetPage.goto(shareTargetUrl);
   await shareTargetPage.bringToFront();
   await shareTargetPage.waitForLoadState('domcontentloaded');
-  const shareTargetTab: Pick<chrome.tabs.Tab, 'title' | 'url'> = {
+  const shareTargetTab: chrome.tabs.Tab = {
+    active: true,
+    autoDiscardable: true,
+    discarded: false,
+    frozen: false,
+    groupId: -1,
+    highlighted: true,
+    incognito: false,
+    index: 0,
+    pinned: false,
+    selected: true,
     title: await shareTargetPage.title(),
     url: shareTargetPage.url(),
+    windowId: 1,
   };
   await capturePageScreenshotWithRetry(
     shareTargetPage,
@@ -104,7 +112,13 @@ const runShareTargetFlow = async (
   );
   log.info("finish");
 
-  expect(popupPage.url()).toContain('https://x.com/intent/post');
+  const popupUrl = new URL(popupPage.url());
+  const intentPostUrl = new URL(popupUrl.searchParams.get('redirect_after_login') ?? '', 'https://x.com');
+  const intentPostPath = intentPostUrl.origin + intentPostUrl.pathname;
+  expect(intentPostPath).toBe('https://x.com/intent/post');
+  const popupText = intentPostUrl.searchParams.get('text');
+  expect(popupText).toContain('TEST_PAGE_TITLE');
+  expect(popupText).toContain(shareTargetUrl);
 
   await popupPage.close();
   await shareTargetPage.close();
@@ -116,7 +130,7 @@ test.describe('Chrome extension background script', () => {
     throw new Error('ビルド済みの拡張機能が存在しません');
   }
 
-  test('共有ターゲットのポップアップを検証する', async ({ page: _ }, testInfo) => {
+  test('共有ターゲットのポップアップを検証する（非ログイン）', async ({ page: _ }, testInfo) => {
     const observer = createBrowserTestObserver(extensionDist);
     const detachUnhandledRejection = observer.attachUnhandledRejection();
 

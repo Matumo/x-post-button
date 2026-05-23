@@ -28,14 +28,10 @@ const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-exten
 
 const triggerExtensionClick = async (
   serviceWorker: Worker,
-  tab: Pick<chrome.tabs.Tab, 'title' | 'url'>,
+  tab: chrome.tabs.Tab,
 ): Promise<void> => {
   await serviceWorker.evaluate(async (clickedTab) => {
-    const onClicked: { dispatch: (tab: chrome.tabs.Tab) => void } =
-      chrome.action.onClicked as unknown as {
-        dispatch: (tab: chrome.tabs.Tab) => void;
-      };
-    onClicked.dispatch(clickedTab as chrome.tabs.Tab);
+    chrome.action.onClicked.dispatch(clickedTab);
   }, tab);
 };
 
@@ -71,9 +67,20 @@ const runShareTargetFlow = async (
   await shareTargetPage.goto(shareTargetUrl);
   await shareTargetPage.bringToFront();
   await shareTargetPage.waitForLoadState('domcontentloaded');
-  const shareTargetTab: Pick<chrome.tabs.Tab, 'title' | 'url'> = {
+  const shareTargetTab: chrome.tabs.Tab = {
+    active: true,
+    autoDiscardable: true,
+    discarded: false,
+    frozen: false,
+    groupId: -1,
+    highlighted: true,
+    incognito: false,
+    index: 0,
+    pinned: false,
+    selected: true,
     title: await shareTargetPage.title(),
     url: shareTargetPage.url(),
+    windowId: 1,
   };
   await capturePageScreenshotWithRetry(
     shareTargetPage,

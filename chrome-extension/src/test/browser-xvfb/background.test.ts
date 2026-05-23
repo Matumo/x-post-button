@@ -282,19 +282,26 @@ const runShareTargetFlow = async (
     'ss1.png',
     'share target page screenshot',
   );
-  const activeTab: Pick<chrome.tabs.Tab, 'title' | 'url'> = {
+  const activeTab: chrome.tabs.Tab = {
+    active: true,
+    autoDiscardable: true,
+    discarded: false,
+    frozen: false,
+    groupId: -1,
+    highlighted: true,
+    incognito: false,
+    index: 0,
+    pinned: false,
+    selected: true,
     title: await page.title(),
     url: page.url(),
+    windowId: 1,
   };
 
   const popupPagePromise: Promise<Page> = context.waitForEvent('page');
 
   await serviceWorker.evaluate(async (clickedTab) => {
-    const onClicked: { dispatch: (tab: chrome.tabs.Tab) => void } =
-      chrome.action.onClicked as unknown as {
-        dispatch: (tab: chrome.tabs.Tab) => void;
-      };
-    onClicked.dispatch(clickedTab as chrome.tabs.Tab);
+    chrome.action.onClicked.dispatch(clickedTab);
   }, activeTab);
 
   const popupPage: Page = await popupPagePromise;

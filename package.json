@@ -19,7 +19,7 @@
     "build:clean": "pnpm run clean:dist",
     "build:bundle": "vite build --config ./chrome-extension/vite.config.ts",
     "test": "pnpm run test:unit:coverage && pnpm run test:browser",
-    "test:install": "playwright install --with-deps",
+    "test:install": "playwright install --with-deps chromium",
     "test:unit": "vitest run --config ./chrome-extension/vitest.config.ts",
     "test:unit:coverage": "vitest run --config ./chrome-extension/vitest.config.ts --coverage",
     "test:browser": "pnpm run test:browser:headless && pnpm run test:browser:xvfb",

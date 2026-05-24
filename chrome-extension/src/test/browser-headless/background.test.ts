@@ -45,6 +45,25 @@ const getOrWaitServiceWorker = async (
   return serviceWorker;
 };
 
+const findNewPage = (
+  context: BrowserContext,
+  knownPages: ReadonlySet<Page>,
+): Page | undefined =>
+  context.pages().find((page) => !knownPages.has(page));
+
+const getOrWaitPopupPage = async (
+  context: BrowserContext,
+  knownPages: ReadonlySet<Page>,
+  popupPagePromise: Promise<Page | undefined>,
+): Promise<Page> => {
+  const popupPage: Page | undefined =
+    findNewPage(context, knownPages) ?? await popupPagePromise;
+  if (!popupPage) {
+    throw new Error('Popup page was not created');
+  }
+  return popupPage;
+};
+
 const runShareTargetFlow = async (
   testInfo: TestInfo,
   observer: ReturnType<typeof createBrowserTestObserver>,
@@ -90,7 +109,12 @@ const runShareTargetFlow = async (
     { fullPage: true },
   );
 
-  const popupPagePromise: Promise<Page> = context.waitForEvent('page');
+  const pagesBeforeClick: ReadonlySet<Page> = new Set(context.pages());
+  const popupPagePromise: Promise<Page | undefined> = context
+    .waitForEvent('page', {
+      predicate: (page) => !pagesBeforeClick.has(page),
+    })
+    .catch(() => undefined);
   await triggerExtensionClick(serviceWorker, shareTargetTab);
   await capturePageScreenshotWithRetry(
     shareTargetPage,
@@ -99,7 +123,11 @@ const runShareTargetFlow = async (
     'share target page screenshot after click',
     { fullPage: true },
   );
-  const popupPage: Page = await popupPagePromise;
+  const popupPage: Page = await getOrWaitPopupPage(
+    context,
+    pagesBeforeClick,
+    popupPagePromise,
+  );
   observer.attachPage(popupPage);
   await popupPage.waitForLoadState('domcontentloaded');
   log.info("popup page url:", popupPage.url());

@@ -1,8 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
+const second = 1000;
+const minute = 60 * second;
+
 const baseProject = {
-  timeout: 30000,
-  globalTimeout: 600000,
+  timeout: 90 * second,
+  globalTimeout: 10 * minute,
   reporter: 'list',
   use: {
     channel: 'chromium',

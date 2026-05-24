@@ -131,6 +131,17 @@ const runShareTargetFlow = async (
   observer.attachPage(popupPage);
   await popupPage.waitForLoadState('domcontentloaded');
   log.info("popup page url:", popupPage.url());
+  const popupUrl = new URL(popupPage.url());
+  const redirectAfterLogin = popupUrl.searchParams.get('redirect_after_login');
+  expect(redirectAfterLogin).not.toBeNull();
+  const intentPostUrl = new URL(redirectAfterLogin ?? '', 'https://x.com');
+  const intentPostPath = intentPostUrl.origin + intentPostUrl.pathname;
+  expect(intentPostPath).toBe('https://x.com/intent/post');
+  const popupText = intentPostUrl.searchParams.get('text');
+  expect(popupText).toContain('TEST_PAGE_TITLE');
+  expect(popupText).toContain(shareTargetUrl);
+
+  log.info("capturing popup page screenshot");
   await capturePageScreenshotWithRetry(
     popupPage,
     testInfo,
@@ -139,14 +150,6 @@ const runShareTargetFlow = async (
     { fullPage: true },
   );
   log.info("finish");
-
-  const popupUrl = new URL(popupPage.url());
-  const intentPostUrl = new URL(popupUrl.searchParams.get('redirect_after_login') ?? '', 'https://x.com');
-  const intentPostPath = intentPostUrl.origin + intentPostUrl.pathname;
-  expect(intentPostPath).toBe('https://x.com/intent/post');
-  const popupText = intentPostUrl.searchParams.get('text');
-  expect(popupText).toContain('TEST_PAGE_TITLE');
-  expect(popupText).toContain(shareTargetUrl);
 
   await popupPage.close();
   await shareTargetPage.close();

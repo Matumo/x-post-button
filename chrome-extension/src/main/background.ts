@@ -29,18 +29,22 @@ const calcPopupBounds = (currentBounds: WindowBounds): WindowBounds => {
 
 export const registerShareAction = (): void => {
   chrome.action.onClicked.addListener(async (tab: chrome.tabs.Tab): Promise<void> => {
-    const url: string = buildShareUrl(tab);
-    const winBounds: WindowBounds = win2winBounds(await chrome.windows.get(tab.windowId));
-    const popupBounds: WindowBounds = calcPopupBounds(winBounds);
-    await chrome.windows.create({
-      type: 'popup',
-      url: url,
-      width: popupBounds.width,
-      height: popupBounds.height,
-      left: popupBounds.left,
-      top: popupBounds.top
-    });
-    log.info('Popup opened.', { url, winBounds, popupBounds });
+    try {
+      const url: string = buildShareUrl(tab);
+      const winBounds: WindowBounds = win2winBounds(await chrome.windows.get(tab.windowId));
+      const popupBounds: WindowBounds = calcPopupBounds(winBounds);
+      await chrome.windows.create({
+        type: 'popup',
+        url: url,
+        width: popupBounds.width,
+        height: popupBounds.height,
+        left: popupBounds.left,
+        top: popupBounds.top
+      });
+      log.info('Popup opened.', { url, winBounds, popupBounds });
+    } catch (error) {
+      log.error('Failed to open share popup.', error);
+    }
   });
 };
 

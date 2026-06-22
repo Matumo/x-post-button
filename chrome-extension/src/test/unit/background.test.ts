@@ -2,6 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { log } from '@test/util/logger';
 log.debug("test background.test.ts");
 
+const { errorLogMock } = vi.hoisted(() => ({
+  errorLogMock: vi.fn(),
+}));
+
+vi.mock('@main/util/logger', () => ({
+  default: {
+    info: vi.fn(),
+    error: errorLogMock,
+  },
+}));
+
 // テストで扱いやすいようにChrome提供の型を最小構成で再定義
 type MockTab = {
   windowId?: number;
@@ -60,6 +71,7 @@ describe('background action handler', () => {
   };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     vi.resetModules();
     await loadBackgroundScript();
   });
@@ -109,5 +121,28 @@ describe('background action handler', () => {
       url: 'https://x.com/intent/post?text=%0A',
       width: 560, height: 420, left: 120, top: 90,
     });
+  });
+
+  it('異常系（ウインドウの取得に失敗した場合はエラーを記録する）', async () => {
+    const error = new Error('Failed to get window');
+    getWindowMock.mockRejectedValue(error);
+
+    await expect(triggerClick(shareTargetTab)).resolves.toBeUndefined();
+
+    expect(createWindowMock).not.toHaveBeenCalled();
+    expect(errorLogMock).toHaveBeenCalledOnce();
+    expect(errorLogMock).toHaveBeenCalledWith('Failed to open share popup.', error);
+  });
+
+  it('異常系（ポップアップの作成に失敗した場合はエラーを記録する）', async () => {
+    const error = new Error('Failed to create popup');
+    getWindowMock.mockResolvedValue({} satisfies MockWindow);
+    createWindowMock.mockRejectedValue(error);
+
+    await expect(triggerClick(shareTargetTab)).resolves.toBeUndefined();
+
+    expect(createWindowMock).toHaveBeenCalledOnce();
+    expect(errorLogMock).toHaveBeenCalledOnce();
+    expect(errorLogMock).toHaveBeenCalledWith('Failed to open share popup.', error);
   });
 });

@@ -7,10 +7,9 @@ import {
   type TestInfo,
   type Worker,
 } from '@playwright/test';
-import { existsSync, mkdtempSync, promises as fsPromises } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { PNG } from 'pngjs';
 import log from '@test/util/logger.js';
 import {
   createBrowserTestObserver,
@@ -25,6 +24,17 @@ import {
   captureXvfbScreenshotWithRetry,
 } from '@test/util/screenshot.js';
 import { applyLoginCookiesFromEnv } from '@test/util/login-cookies.js';
+import {
+  createTestTab,
+  getOrWaitPopupPage,
+  triggerExtensionClick,
+} from '@test/util/extension-action.js';
+import {
+  calculateScreenshotStats,
+  detectNestedRectangles,
+  rectangleHeight,
+  rectangleWidth,
+} from '@test/util/image/screenshot-analysis.js';
 
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
@@ -42,243 +52,6 @@ async function setWindowSize(context: BrowserContext, page: Page,
     bounds: { windowState: 'normal', width, height, left, top },
   });
 }
-
-type ScreenshotStats = {
-  width: number;
-  height: number;
-  pixelCount: number;
-  redPixelCount: number;
-};
-
-type RectangleBounds = {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-  pixelCount: number;
-};
-
-const createEmptyRectangleBounds = (): RectangleBounds => ({
-  minX: Number.POSITIVE_INFINITY,
-  minY: Number.POSITIVE_INFINITY,
-  maxX: Number.NEGATIVE_INFINITY,
-  maxY: Number.NEGATIVE_INFINITY,
-  pixelCount: 0,
-});
-
-const expandRectangleBounds = (
-  bounds: RectangleBounds,
-  x: number,
-  y: number,
-): void => {
-  bounds.minX = Math.min(bounds.minX, x);
-  bounds.minY = Math.min(bounds.minY, y);
-  bounds.maxX = Math.max(bounds.maxX, x);
-  bounds.maxY = Math.max(bounds.maxY, y);
-  bounds.pixelCount += 1;
-};
-
-const isRectangleBoundsValid = (bounds: RectangleBounds): boolean =>
-  Number.isFinite(bounds.minX) &&
-  Number.isFinite(bounds.minY) &&
-  Number.isFinite(bounds.maxX) &&
-  Number.isFinite(bounds.maxY) &&
-  bounds.pixelCount > 0;
-
-const rectangleWidth = (bounds: RectangleBounds): number =>
-  isRectangleBoundsValid(bounds)
-    ? bounds.maxX - bounds.minX + 1
-    : 0;
-
-const rectangleHeight = (bounds: RectangleBounds): number =>
-  isRectangleBoundsValid(bounds)
-    ? bounds.maxY - bounds.minY + 1
-    : 0;
-
-const isRedPixel = (r: number, g: number, b: number, a: number): boolean =>
-  r === 255 && g === 0 && b === 0 && a === 255;
-
-const calculateScreenshotStats = async (filePath: string): Promise<ScreenshotStats> => {
-  const fileBuffer = await fsPromises.readFile(filePath);
-  const png = PNG.sync.read(fileBuffer);
-  let pixelCount = 0;
-  let redPixelCount = 0;
-  for (let i = 0; i < png.data.length; i += 4) {
-    const r = png.data[i];
-    const g = png.data[i + 1];
-    const b = png.data[i + 2];
-    const a = png.data[i + 3];
-    pixelCount += 1;
-    if (isRedPixel(r, g, b, a)) {
-      redPixelCount += 1;
-    }
-  }
-  return {
-    width: png.width,
-    height: png.height,
-    pixelCount,
-    redPixelCount,
-  };
-};
-
-type SearchArea = {
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
-};
-
-const loadPng = async (filePath: string) => {
-  const fileBuffer = await fsPromises.readFile(filePath);
-  return PNG.sync.read(fileBuffer);
-};
-
-const findRedRectangleBounds = (data: Uint8Array, width: number, height: number): RectangleBounds => {
-  const redBounds = createEmptyRectangleBounds();
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const offset = (y * width + x) * 4;
-      if (isRedPixel(data[offset], data[offset + 1], data[offset + 2], data[offset + 3])) {
-        expandRectangleBounds(redBounds, x, y);
-      }
-    }
-  }
-  return redBounds;
-};
-
-const assertValidRedBounds = (redBounds: RectangleBounds): void => {
-  if (!isRectangleBoundsValid(redBounds)) {
-    throw new Error('赤色の領域を検出できませんでした');
-  }
-  if (redBounds.maxX - redBounds.minX < 2 || redBounds.maxY - redBounds.minY < 2) {
-    throw new Error('赤色の領域が小さすぎて内側の判定ができません');
-  }
-};
-
-const createInnerSearchArea = (redBounds: RectangleBounds): SearchArea => ({
-  minX: redBounds.minX + 1,
-  maxX: redBounds.maxX - 1,
-  minY: redBounds.minY + 1,
-  maxY: redBounds.maxY - 1,
-});
-
-const floodFillNonRedRegion = (
-  startIndex: number,
-  data: Uint8Array,
-  width: number,
-  searchArea: SearchArea,
-  visited: Uint8Array,
-): RectangleBounds => {
-  const bounds = createEmptyRectangleBounds();
-  const queue: number[] = [startIndex];
-  let queueIndex = 0;
-
-  while (queueIndex < queue.length) {
-    const current = queue[queueIndex];
-    queueIndex += 1;
-    const cy = Math.floor(current / width);
-    const cx = current - cy * width;
-    expandRectangleBounds(bounds, cx, cy);
-
-    const neighbors: [number, number][] = [
-      [cx - 1, cy],
-      [cx + 1, cy],
-      [cx, cy - 1],
-      [cx, cy + 1],
-    ];
-    for (const [nx, ny] of neighbors) {
-      if (nx < searchArea.minX || nx > searchArea.maxX || ny < searchArea.minY || ny > searchArea.maxY) {
-        continue;
-      }
-      const neighborIndex = ny * width + nx;
-      if (visited[neighborIndex]) {
-        continue;
-      }
-      const neighborOffset = neighborIndex * 4;
-      if (isRedPixel(
-        data[neighborOffset],
-        data[neighborOffset + 1],
-        data[neighborOffset + 2],
-        data[neighborOffset + 3],
-      )) {
-        continue;
-      }
-      visited[neighborIndex] = 1;
-      queue.push(neighborIndex);
-    }
-  }
-
-  return bounds;
-};
-
-const collectInnerCandidates = (
-  data: Uint8Array,
-  width: number,
-  height: number,
-  searchArea: SearchArea,
-): RectangleBounds[] => {
-  const visited: Uint8Array = new Uint8Array(width * height);
-  const candidates: RectangleBounds[] = [];
-
-  for (let y = searchArea.minY; y <= searchArea.maxY; y += 1) {
-    for (let x = searchArea.minX; x <= searchArea.maxX; x += 1) {
-      const pointIndex = y * width + x;
-      if (visited[pointIndex]) {
-        continue;
-      }
-      const offset = pointIndex * 4;
-      if (isRedPixel(data[offset], data[offset + 1], data[offset + 2], data[offset + 3])) {
-        continue;
-      }
-      visited[pointIndex] = 1;
-      const bounds = floodFillNonRedRegion(pointIndex, data, width, searchArea, visited);
-      if (isRectangleBoundsValid(bounds)) {
-        candidates.push(bounds);
-      }
-    }
-  }
-
-  return candidates;
-};
-
-const selectLargestCandidate = (candidates: RectangleBounds[]): RectangleBounds => {
-  if (candidates.length === 0) {
-    throw new Error('赤色領域内に赤以外の領域を検出できませんでした');
-  }
-  candidates.sort((a, b) => b.pixelCount - a.pixelCount);
-  return candidates[0];
-};
-
-const detectNestedRectangles = async (
-  filePath: string,
-): Promise<{ redBounds: RectangleBounds; innerBounds: RectangleBounds }> => {
-  const { width, height, data } = await loadPng(filePath);
-  const redBounds = findRedRectangleBounds(data, width, height);
-  assertValidRedBounds(redBounds);
-  const searchArea = createInnerSearchArea(redBounds);
-  const candidates = collectInnerCandidates(data, width, height, searchArea);
-  const innerBounds = selectLargestCandidate(candidates);
-  return { redBounds, innerBounds };
-};
-
-const findNewPage = (
-  context: BrowserContext,
-  knownPages: ReadonlySet<Page>,
-): Page | undefined =>
-  context.pages().find((page) => !knownPages.has(page));
-
-const getOrWaitPopupPage = async (
-  context: BrowserContext,
-  knownPages: ReadonlySet<Page>,
-  popupPagePromise: Promise<Page | undefined>,
-): Promise<Page> => {
-  const popupPage: Page | undefined =
-    findNewPage(context, knownPages) ?? await popupPagePromise;
-  if (!popupPage) {
-    throw new Error('Popup page was not created');
-  }
-  return popupPage;
-};
 
 const runShareTargetFlow = async (
   testInfo: TestInfo,
@@ -301,21 +74,7 @@ const runShareTargetFlow = async (
     'ss1.png',
     'share target page screenshot',
   );
-  const activeTab: chrome.tabs.Tab = {
-    active: true,
-    autoDiscardable: true,
-    discarded: false,
-    frozen: false,
-    groupId: -1,
-    highlighted: true,
-    incognito: false,
-    index: 0,
-    pinned: false,
-    selected: true,
-    title: await page.title(),
-    url: page.url(),
-    windowId: 1,
-  };
+  const activeTab: chrome.tabs.Tab = await createTestTab(page);
 
   const pagesBeforeClick: ReadonlySet<Page> = new Set(context.pages());
   const popupPagePromise: Promise<Page | undefined> = context
@@ -324,12 +83,7 @@ const runShareTargetFlow = async (
     })
     .catch(() => undefined);
 
-  await serviceWorker.evaluate(async (clickedTab) => {
-    // windowIdはテスト実行時の実ウィンドウに合わせる
-    // backgroundはget(tab.windowId)を使う
-    const focusedWindow = await chrome.windows.getLastFocused();
-    chrome.action.onClicked.dispatch({ ...clickedTab, windowId: focusedWindow.id ?? clickedTab.windowId });
-  }, activeTab);
+  await triggerExtensionClick(serviceWorker, activeTab);
 
   const popupPage: Page = await getOrWaitPopupPage(
     context,
@@ -366,7 +120,7 @@ const runShareTargetFlow = async (
   };
   await logScreenshotStats();
 
-  const assertSs4NestedRectangles = async (): Promise<void> => {
+  const assertNestedRectanglesInXvfbShot = async (): Promise<void> => {
     const screenshotPath: string = testInfo.outputPath('ss3.png');
     if (!existsSync(screenshotPath)) {
       throw new Error('チェック対象のスクリーンショットが作成されていません');
@@ -396,13 +150,13 @@ const runShareTargetFlow = async (
     // ページ左上座標(30,30)
     expect(redBounds.minX).toBe(30);
     //expect(redBounds.minY).toBe(176); // 30 + ヘッダーサイズ
-    const header_size = redBounds.minY - 30;
+    const headerSize = redBounds.minY - 30;
     // ページ右下座標(1030-1,1080-1)
     expect(redBounds.maxX).toBe(1029);
     expect(redBounds.maxY).toBe(1079);
     // ページサイズ(1000,1080)
     expect(redWidth).toBe(1000);
-    expect(redHeight).toBe(1080 - header_size - 30); // 1080 - ヘッダサイズ - 30
+    expect(redHeight).toBe(1080 - headerSize - 30); // 1080 - ヘッダサイズ - 30
     // ポップアップ左上座標(180,270)
     expect(innerBounds.minX).toBe(180);
     expect(innerBounds.minY).toBe(270);
@@ -413,7 +167,7 @@ const runShareTargetFlow = async (
     expect(innerWidth).toBe(700);
     expect(innerHeight).toBe(600);
   };
-  await assertSs4NestedRectangles();
+  await assertNestedRectanglesInXvfbShot();
 
   const popupUrl = new URL(popupPage.url());
   const intentPostUrl = shouldRunLoginTest ? popupUrl

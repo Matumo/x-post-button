@@ -18,6 +18,11 @@ import {
   capturePageScreenshotWithRetry,
 } from '@test/util/screenshot';
 import {
+  createTestTab,
+  getOrWaitPopupPage,
+  triggerExtensionClick,
+} from '@test/util/extension-action.js';
+import {
   startTestWebServer,
   type TestWebServer,
 } from '@test/util/web-server/server';
@@ -25,18 +30,6 @@ import {
 const extensionRoot: string = resolve(__dirname, '../../..');
 const extensionDist: string = resolve(extensionRoot, '..', 'dist', 'chrome-extension');
 // headlessテストはログインCookieを設定せず、非ログイン状態でのXのリダイレクトを検証する。
-
-const triggerExtensionClick = async (
-  serviceWorker: Worker,
-  tab: chrome.tabs.Tab,
-): Promise<void> => {
-  await serviceWorker.evaluate(async (clickedTab) => {
-    // windowIdはテスト実行時の実ウィンドウに合わせる
-    // backgroundはget(tab.windowId)を使う
-    const focusedWindow = await chrome.windows.getLastFocused();
-    chrome.action.onClicked.dispatch({ ...clickedTab, windowId: focusedWindow.id ?? clickedTab.windowId });
-  }, tab);
-};
 
 const getOrWaitServiceWorker = async (
   context: BrowserContext,
@@ -46,25 +39,6 @@ const getOrWaitServiceWorker = async (
     serviceWorker = await context.waitForEvent('serviceworker');
   }
   return serviceWorker;
-};
-
-const findNewPage = (
-  context: BrowserContext,
-  knownPages: ReadonlySet<Page>,
-): Page | undefined =>
-  context.pages().find((page) => !knownPages.has(page));
-
-const getOrWaitPopupPage = async (
-  context: BrowserContext,
-  knownPages: ReadonlySet<Page>,
-  popupPagePromise: Promise<Page | undefined>,
-): Promise<Page> => {
-  const popupPage: Page | undefined =
-    findNewPage(context, knownPages) ?? await popupPagePromise;
-  if (!popupPage) {
-    throw new Error('Popup page was not created');
-  }
-  return popupPage;
 };
 
 const runShareTargetFlow = async (
@@ -89,21 +63,7 @@ const runShareTargetFlow = async (
   await shareTargetPage.goto(shareTargetUrl);
   await shareTargetPage.bringToFront();
   await shareTargetPage.waitForLoadState('domcontentloaded');
-  const shareTargetTab: chrome.tabs.Tab = {
-    active: true,
-    autoDiscardable: true,
-    discarded: false,
-    frozen: false,
-    groupId: -1,
-    highlighted: true,
-    incognito: false,
-    index: 0,
-    pinned: false,
-    selected: true,
-    title: await shareTargetPage.title(),
-    url: shareTargetPage.url(),
-    windowId: 1,
-  };
+  const shareTargetTab: chrome.tabs.Tab = await createTestTab(shareTargetPage);
   await capturePageScreenshotWithRetry(
     shareTargetPage,
     testInfo,

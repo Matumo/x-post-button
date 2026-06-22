@@ -325,7 +325,10 @@ const runShareTargetFlow = async (
     .catch(() => undefined);
 
   await serviceWorker.evaluate(async (clickedTab) => {
-    chrome.action.onClicked.dispatch(clickedTab);
+    // windowIdはテスト実行時の実ウィンドウに合わせる
+    // backgroundはget(tab.windowId)を使う
+    const focusedWindow = await chrome.windows.getLastFocused();
+    chrome.action.onClicked.dispatch({ ...clickedTab, windowId: focusedWindow.id ?? clickedTab.windowId });
   }, activeTab);
 
   const popupPage: Page = await getOrWaitPopupPage(

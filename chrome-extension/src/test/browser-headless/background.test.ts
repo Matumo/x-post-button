@@ -31,7 +31,10 @@ const triggerExtensionClick = async (
   tab: chrome.tabs.Tab,
 ): Promise<void> => {
   await serviceWorker.evaluate(async (clickedTab) => {
-    chrome.action.onClicked.dispatch(clickedTab);
+    // windowIdはテスト実行時の実ウィンドウに合わせる
+    // backgroundはget(tab.windowId)を使う
+    const focusedWindow = await chrome.windows.getLastFocused();
+    chrome.action.onClicked.dispatch({ ...clickedTab, windowId: focusedWindow.id ?? clickedTab.windowId });
   }, tab);
 };
 

@@ -30,7 +30,7 @@ const calcPopupBounds = (currentBounds: WindowBounds): WindowBounds => {
 export const registerShareAction = (): void => {
   chrome.action.onClicked.addListener(async (tab: chrome.tabs.Tab): Promise<void> => {
     const url: string = buildShareUrl(tab);
-    const winBounds: WindowBounds = win2winBounds(await chrome.windows.getCurrent());
+    const winBounds: WindowBounds = win2winBounds(await chrome.windows.get(tab.windowId));
     const popupBounds: WindowBounds = calcPopupBounds(winBounds);
     await chrome.windows.create({
       type: 'popup',

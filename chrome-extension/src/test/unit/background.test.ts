@@ -2,8 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { log } from '@test/util/logger';
 log.debug("test background.test.ts");
 
+const { errorLogMock } = vi.hoisted(() => ({
+  errorLogMock: vi.fn(),
+}));
+
+vi.mock('@main/util/logger', () => ({
+  default: {
+    info: vi.fn(),
+    error: errorLogMock,
+  },
+}));
+
 // テストで扱いやすいようにChrome提供の型を最小構成で再定義
 type MockTab = {
+  windowId?: number;
   title?: string | null;
   url?: string | null;
 };
@@ -20,7 +32,7 @@ type OnClickedHandler = (tab: MockTab) => Promise<void> | void;
 describe('background action handler', () => {
   let registeredHandler: OnClickedHandler | undefined;
   let addListenerMock: ReturnType<typeof vi.fn>;
-  let getCurrentMock: ReturnType<typeof vi.fn>;
+  let getWindowMock: ReturnType<typeof vi.fn>;
   let createWindowMock: ReturnType<typeof vi.fn>;
 
   // background.tsを読み込むたびにChrome API全体をモックし直す
@@ -31,7 +43,7 @@ describe('background action handler', () => {
       registeredHandler = handler;
     });
 
-    getCurrentMock = vi.fn();
+    getWindowMock = vi.fn();
     createWindowMock = vi.fn();
 
     vi.stubGlobal('chrome', {
@@ -41,7 +53,7 @@ describe('background action handler', () => {
         },
       },
       windows: {
-        getCurrent: getCurrentMock,
+        get: getWindowMock,
         create: createWindowMock,
       },
     });
@@ -59,6 +71,7 @@ describe('background action handler', () => {
   };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     vi.resetModules();
     await loadBackgroundScript();
   });
@@ -67,7 +80,7 @@ describe('background action handler', () => {
     vi.unstubAllGlobals();
   });
 
-  const shareTargetTab: MockTab = { title: 'Hello World', url: 'https://example.com/test?a=b#123' };
+  const shareTargetTab: MockTab = { windowId: 12345, title: 'Hello World', url: 'https://example.com/test?a=b#123' };
   // 正常系テスト
   const popupCases: Array<[string, MockWindow, { width: number; height: number; left: number; top: number }]> = [
     ['十分なウインドウサイズの場合', { width: 1200, height: 900, left: 100, top: 50 } satisfies MockWindow, { width: 800, height: 600, left: 300, top: 200 }],
@@ -76,14 +89,15 @@ describe('background action handler', () => {
   ];
   it.each(popupCases)('正常系（%s）', async (_description, mockWindow, expected) => {
     // Mock
-    getCurrentMock.mockResolvedValue(mockWindow);
+    getWindowMock.mockResolvedValue(mockWindow);
 
     // 実行
     await triggerClick(shareTargetTab);
 
     // 検証
     expect(addListenerMock).toHaveBeenCalledTimes(1);
-    expect(getCurrentMock).toHaveBeenCalledTimes(1);
+    expect(getWindowMock).toHaveBeenCalledTimes(1);
+    expect(getWindowMock).toHaveBeenCalledWith(shareTargetTab.windowId);
     expect(createWindowMock).toHaveBeenCalledWith({
       type: 'popup',
       url: 'https://x.com/intent/post?text=Hello%20World%0Ahttps%3A%2F%2Fexample.com%2Ftest%3Fa%3Db%23123',
@@ -93,18 +107,42 @@ describe('background action handler', () => {
 
   it('正常系（入力値が無い場合もポップアップ表示は行う）', async () => {
     // Mock
-    getCurrentMock.mockResolvedValue({} satisfies MockWindow);
+    getWindowMock.mockResolvedValue({} satisfies MockWindow);
 
     // 実行
-    await triggerClick({});
+    await triggerClick({ windowId: 67890 });
 
     // 検証
     expect(addListenerMock).toHaveBeenCalledTimes(1);
-    expect(getCurrentMock).toHaveBeenCalledTimes(1);
+    expect(getWindowMock).toHaveBeenCalledTimes(1);
+    expect(getWindowMock).toHaveBeenCalledWith(67890);
     expect(createWindowMock).toHaveBeenCalledWith({
       type: 'popup',
       url: 'https://x.com/intent/post?text=%0A',
       width: 560, height: 420, left: 120, top: 90,
     });
+  });
+
+  it('異常系（ウインドウの取得に失敗した場合はエラーを記録する）', async () => {
+    const error = new Error('Failed to get window');
+    getWindowMock.mockRejectedValue(error);
+
+    await expect(triggerClick(shareTargetTab)).resolves.toBeUndefined();
+
+    expect(createWindowMock).not.toHaveBeenCalled();
+    expect(errorLogMock).toHaveBeenCalledOnce();
+    expect(errorLogMock).toHaveBeenCalledWith('Failed to open share popup.', error);
+  });
+
+  it('異常系（ポップアップの作成に失敗した場合はエラーを記録する）', async () => {
+    const error = new Error('Failed to create popup');
+    getWindowMock.mockResolvedValue({} satisfies MockWindow);
+    createWindowMock.mockRejectedValue(error);
+
+    await expect(triggerClick(shareTargetTab)).resolves.toBeUndefined();
+
+    expect(createWindowMock).toHaveBeenCalledOnce();
+    expect(errorLogMock).toHaveBeenCalledOnce();
+    expect(errorLogMock).toHaveBeenCalledWith('Failed to open share popup.', error);
   });
 });

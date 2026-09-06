@@ -9,6 +9,7 @@ export const createTestTab = async (page: Page): Promise<chrome.tabs.Tab> => ({
   highlighted: true,
   incognito: false,
   index: 0,
+  lastAccessed: Date.now(),
   pinned: false,
   selected: true,
   title: await page.title(),
